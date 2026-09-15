@@ -10,6 +10,8 @@ service or an integration built into the Kandev host.
 
 ## Capabilities
 
+- Optional [signed webhook relay](docs/automation-relay.md) from Bitbucket to an
+  existing Kandev Webhook automation, configured in plugin settings.
 - Bitbucket Cloud: API-token or OAuth 2.0 connections.
 - Bitbucket Data Center: personal, project, repository, or OAuth credentials.
 - Native Kandev repository provider, task-menu actions, and review panel.

@@ -1,6 +1,6 @@
 id: "kandev-plugin-bitbucket"
 api_version: 1
-version: "0.3.0"
+version: "0.4.0"
 min_kandev_version: "0.88.0"
 display_name: "Bitbucket"
 description: "Connect Bitbucket Cloud or Data Center to native Kandev repository, pull-request, task, review, and watch workflows."
@@ -30,6 +30,11 @@ capabilities:
   api_write: ["tasks"]
 
 webhooks:
+  - key: "automation-relay"
+    description: "Signed Bitbucket deliveries forwarded to a configured Kandev automation webhook."
+    method: "POST"
+    access: public
+    max_body_bytes: 1048576
   - key: "oauth-callback"
     description: "Bitbucket OAuth callback; validates signed, single-use state and PKCE."
     method: "GET"
@@ -78,3 +83,48 @@ reference_sources:
 ui:
   bundle: "/ui/bundle.js"
   styles: ["/ui/plugin.css"]
+
+# One installation-wide relay. Secrets are resolved through Kandev's vault.
+config_schema:
+  type: object
+  properties:
+    relay_enabled:
+      type: boolean
+      title: "Enable automation relay"
+      default: false
+      description: "Forward matching signed Bitbucket events to one existing Webhook automation."
+    relay_product:
+      type: string
+      title: "Relay Bitbucket product"
+      enum: ["cloud", "data_center"]
+    relay_repository:
+      type: string
+      title: "Relay repository"
+      description: "Exact workspace/slug (Cloud) or PROJECT/slug (Data Center)."
+    relay_event:
+      type: string
+      title: "Relay event"
+      enum: ["pull_request_opened", "pull_request_merged", "push", "ci_result"]
+      description: "CI results are supported for Cloud only."
+    relay_branches:
+      type: string
+      title: "Relay branches"
+      description: "Optional exact branch names separated by commas. PRs match the destination branch; pushes match any changed branch. Leave empty for CI results."
+    relay_conclusions:
+      type: string
+      title: "Relay CI conclusions"
+      description: "CI only: optional comma-separated successful, failed, stopped. Empty matches all terminal results."
+    relay_destination_url:
+      type: string
+      title: "Automation webhook URL"
+      description: "Full HTTP(S) URL ending /api/v1/automations/webhook/<automation-id>, reachable from the plugin. Redirects are rejected."
+    relay_signing_secret:
+      type: string
+      secret: true
+      title: "Bitbucket webhook signing secret"
+      description: "The secret entered in Bitbucket's webhook configuration."
+    relay_automation_secret:
+      type: string
+      secret: true
+      title: "Kandev automation webhook secret"
+      description: "The destination automation's webhook secret, sent as X-Webhook-Secret."

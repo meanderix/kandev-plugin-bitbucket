@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"sync"
 
 	"kandev-plugin-bitbucket/internal/domain"
 	"kandev-plugin-bitbucket/internal/watches"
@@ -17,6 +18,7 @@ const referenceSource = "bitbucket"
 // credential RPCs. Its inputs are host-verified action context and adapter
 // DTOs; it never receives a repository URL with embedded credentials.
 type Workflows struct {
+	relayMu     sync.Mutex
 	host        pluginsdk.Host
 	resolver    ProviderResolver
 	tasks       *TaskGateway
@@ -89,9 +91,12 @@ func (w *Workflows) HandleAction(ctx context.Context, request *pluginsdk.PluginA
 	}
 }
 
-// HandleWebhook dispatches only the declared OAuth callback and keeps all
-// callback parameters inside the PKCE coordinator rather than action bodies.
+// HandleWebhook dispatches provider deliveries and the OAuth callback. Each
+// public route authenticates its own input before performing side effects.
 func (w *Workflows) HandleWebhook(ctx context.Context, request *pluginsdk.WebhookRequest) (*pluginsdk.WebhookResponse, error) {
+	if request != nil && request.WebhookKey == "automation-relay" {
+		return w.handleAutomationRelay(ctx, request), nil
+	}
 	if request == nil || request.WebhookKey != "oauth-callback" || request.Method != "GET" {
 		return &pluginsdk.WebhookResponse{Status: 404}, nil
 	}
