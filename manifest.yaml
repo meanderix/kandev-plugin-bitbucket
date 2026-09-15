@@ -78,3 +78,97 @@ reference_sources:
 ui:
   bundle: "/ui/bundle.js"
   styles: ["/ui/plugin.css"]
+
+automation_conditions:
+  - key: "pull_request_opened"
+    verification_headers: ["x-hub-signature", "x-event-key"]
+    access: "public"
+    config_version: 1
+    label: "New pull requests"
+    label_key: "automationPullRequestOpened"
+    description: "Receive signed Bitbucket events for the selected repository."
+    description_key: "automationWebhookDescription"
+    default_config:
+      repository: ""
+    config_schema:
+      type: "object"
+      required: ["repository"]
+      properties:
+        repository:
+          type: "string"
+          title: "Repository (workspace/repository or PROJECT/repository)"
+          title_key: "automationRepository"
+        branches:
+          type: "array"
+          items: {type: "string"}
+          title: "Branches (one per line; empty matches all)"
+          title_key: "automationBranches"
+  - key: "pull_request_merged"
+    verification_headers: ["x-hub-signature", "x-event-key"]
+    access: "public"
+    config_version: 1
+    label: "Pull request merged"
+    label_key: "automationPullRequestMerged"
+    description: "Receive signed Bitbucket events for the selected repository."
+    description_key: "automationWebhookDescription"
+    default_config:
+      repository: ""
+    config_schema:
+      type: "object"
+      required: ["repository"]
+      properties:
+        repository:
+          type: "string"
+          title: "Repository (workspace/repository or PROJECT/repository)"
+          title_key: "automationRepository"
+        branches:
+          type: "array"
+          items: {type: "string"}
+          title: "Branches (one per line; empty matches all)"
+          title_key: "automationBranches"
+  - key: "push"
+    verification_headers: ["x-hub-signature", "x-event-key"]
+    access: "public"
+    config_version: 1
+    label: "Push to branch"
+    label_key: "automationPush"
+    description: "Receive signed Bitbucket events for the selected repository."
+    description_key: "automationWebhookDescription"
+    default_config:
+      repository: ""
+    config_schema:
+      type: "object"
+      required: ["repository"]
+      properties:
+        repository:
+          type: "string"
+          title: "Repository (workspace/repository or PROJECT/repository)"
+          title_key: "automationRepository"
+        branches:
+          type: "array"
+          items: {type: "string"}
+          title: "Branches (one per line; empty matches all)"
+          title_key: "automationBranches"
+  - key: "ci_result"
+    verification_headers: ["x-hub-signature", "x-event-key"]
+    access: "public"
+    config_version: 1
+    label: "CI check result"
+    label_key: "automationCI"
+    description: "Receive signed Bitbucket events for the selected repository."
+    description_key: "automationWebhookDescription"
+    default_config:
+      repository: ""
+    config_schema:
+      type: "object"
+      required: ["repository"]
+      properties:
+        repository:
+          type: "string"
+          title: "Repository (workspace/repository or PROJECT/repository)"
+          title_key: "automationRepository"
+        conclusions:
+          type: "array"
+          items: {type: "string"}
+          title: "Results (successful, failed, stopped; one per line)"
+          title_key: "automationConclusions"

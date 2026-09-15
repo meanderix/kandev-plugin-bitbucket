@@ -171,3 +171,72 @@ resolves the latest GitHub Release containing the required
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Signed automation webhooks
+
+This capability requires **both this plugin and the companion Kandev host changes**
+for `pluginsdk.AutomationAdapter`. The existing `min_kandev_version` is the baseline
+for the plugin's older capabilities; pin the first released host containing the
+adapter extension before publishing a webhook-enabled release. A stock older host
+will not show these conditions.
+
+1. Connect the Kandev workspace to Bitbucket using the plugin's settings.
+2. Create an automation and choose a condition under **Bitbucket** in **Add Condition**.
+3. Choose or enter the repository (`workspace/slug` for Cloud, `PROJECT/slug` for
+   Data Center). Repository suggestions come from the workspace's connection;
+   save-time validation checks provider access. Enter exact branch names, one
+   per line, or leave the list empty to match all branches.
+4. Save the automation. Expand its condition and select **Configure webhook**.
+5. Copy **Webhook URL** and select **Reveal secret**. In that Bitbucket
+   repository's webhook settings, use the URL, supply the signing secret in
+   the Secret field, and select the corresponding events below. The URL must
+   be reachable from Bitbucket.
+
+| Condition | Bitbucket Cloud events | Bitbucket Data Center events |
+| --- | --- | --- |
+| New pull requests | `pullrequest:created` | `pr:opened` |
+| Pull request merged | `pullrequest:fulfilled` | `pr:merged` |
+| Push to branch | `repo:push` | `repo:refs_changed` |
+| CI check result | `repo:commit_status_created`, `repo:commit_status_updated` | Unavailable |
+
+PR filters match the destination branch. Push filters match branch updates;
+branch deletions and tags are ignored. A delivery affecting several matching
+branches creates one run. Cloud CI accepts terminal `successful`, `failed`, or
+`stopped` conclusions. It does not offer a branch filter because the signed
+commit-status payload does not prove branch membership. Data Center CI is
+explicitly unavailable until its product/version contract is supported.
+
+The adapter checks `X-Hub-Signature` using HMAC-SHA256 over the unchanged request
+body, and compares digests in constant time. It does not use `X-Webhook-Secret`.
+Cloud's unsigned event header is a routing hint checked against the signed body
+shape and state. Data Center's body `eventKey` must agree with the header when
+present. Exact body bytes determine deduplication; unsigned request IDs cannot
+bypass it. Identical deliveries at one binding collapse for seven days after
+terminal handling. Bodies must be JSON objects no larger than 1 MiB.
+
+`{{webhook.body}}` contains the original event JSON. `{{webhook.<path>}}` addresses
+original fields; `{{data.repository}}`, `{{data.branches}}`, and
+`{{data.event_kind}}` address normalized fields. Treat provider text as untrusted
+context in automation prompts.
+
+After changing filters, save and configure the binding again. After reconnecting
+or rotating provider credentials, configure it again to use the new connection
+revision. Plugin upgrades and reinstalls also require **Configure webhook** again
+and updating Bitbucket with the new signing secret; ordinary host restarts retain
+the binding. **Rotate secret** requires updating the Bitbucket secret as well;
+**Revoke webhook** invalidates the URL. Imported/copied configurations carry no
+binding or signing secret and need fresh setup.
+
+HTTP 202 acknowledges durable receipt; 200 means duplicate or verified-but-ignored.
+401 means invalid signature, inactive binding, or obsolete connection; 400 means
+malformed authenticated input; 413 means the body is too large; 503 means the
+adapter or storage could not currently complete verification/admission. Recent
+deliveries in the condition show the eventual outcome. A host crash after the
+execution claim can leave a failed, indeterminate delivery; Kandev does not repeat
+that task creation automatically.
+
+Protocol fixtures follow Atlassian's [Cloud webhook authentication documentation](https://support.atlassian.com/bitbucket-cloud/docs/manage-webhooks/),
+[Cloud payload reference](https://support.atlassian.com/bitbucket-cloud/docs/event-payloads/),
+and [Data Center payload reference](https://confluence.atlassian.com/bitbucketserver/event-payload-938025882.html).
+The automated tests use signed fixtures; they do not replace delivery testing
+against your Bitbucket installation.

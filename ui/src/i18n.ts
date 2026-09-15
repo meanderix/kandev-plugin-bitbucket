@@ -5,6 +5,14 @@ import type {
 } from "./host-contract";
 
 const english = {
+  automationPullRequestOpened: "New pull requests",
+  automationPullRequestMerged: "Pull request merged",
+  automationPush: "Push to branch",
+  automationCI: "CI check result",
+  automationWebhookDescription: "Receive signed Bitbucket events for the selected repository.",
+  automationRepository: "Repository (workspace/repository or PROJECT/repository)",
+  automationBranches: "Branches (one per line; empty matches all)",
+  automationConclusions: "Results (successful, failed, stopped; one per line)",
   bitbucket: "Bitbucket",
   settings: "Settings",
   openSettings: "Open Bitbucket settings",
